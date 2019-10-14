@@ -20,18 +20,28 @@ public abstract class WGBCommand implements CommandExecutor {
 	public static final String USAGE = ChatColor.RED + "Usage: ";
 	public static final String INVALID_ARGUMENTS = ChatColor.RED + "Invalid arguments!";
 	
-	private String command;
+	private final WGBPlugin plugin;
+	private final String command;
 	
-	@Deprecated
-	public WGBCommand() {
-		this(null);
+	/**
+	 * @param plugin An instance of the plugin object used in some helper functions.
+	 * @param command The command name of this command.
+	 */
+	public WGBCommand(WGBPlugin plugin, String command) {
+		this.plugin = plugin;
+		this.command = command;
 	}
 	
 	/**
 	 * @param command The command name of this command.
 	 */
 	public WGBCommand(String command) {
-		this.command = command;
+		this(null, command);
+	}
+	
+	@Deprecated
+	public WGBCommand() {
+		this(null, null);
 	}
 	
 	@Deprecated
@@ -195,6 +205,22 @@ public abstract class WGBCommand implements CommandExecutor {
 		
 		sender.sendMessage(ChatColor.RED + "Invalid world '" + worldName + "'!");
 		throw new CommandInterrupt();
+	}
+	
+	/**
+	 * Wrapper function for {@link CommandSender#sendMessage(String)} which makes use of the {@link WGBPlugin#getMessage(String, Object...)} method.
+	 */
+	public void sendMessage(CommandSender sender, String path, Object... replace) {
+		checkPlugin();
+		sender.sendMessage(plugin.getMessage(path, replace));
+	}
+	
+	/**
+	 * Helper function for the helper functions. Checks if a plugin was passed through the constructor
+	 */
+	private void checkPlugin() {
+		if(plugin == null)
+			throw new IllegalStateException("Please pass through a plugin object in the command constructor to make use of this helper method.");
 	}
 	
 	/**
