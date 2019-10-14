@@ -1,5 +1,8 @@
 package nl.thewgbbroz.butils_v2.utils;
 
+import java.util.HashMap;
+
+import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
@@ -29,5 +32,18 @@ public class InventoryUtils {
 		}
 		
 		return false;
+	}
+	
+	/**
+	 * Gives the item without destroying it. If the item couldn't be placed in the players inventory,
+	 * it will be dropped.
+	 */
+	public static void giveItemsSafe(Player player, ItemStack... items) {
+		HashMap<Integer, ItemStack> couldntFit = player.getInventory().addItem(items);
+		
+		couldntFit.forEach((index, item) -> {
+			// Drop the item!
+			player.getWorld().dropItemNaturally(player.getLocation(), item);
+		});
 	}
 }

@@ -5,5 +5,5 @@ public class BUtils {
 	 * Current bUtils version.
 	 * Major.Minor.Patch
 	 */
-	public static final String BUTILS_VERSION = "2.1.10";
+	public static final String BUTILS_VERSION = "2.1.11";
 }
