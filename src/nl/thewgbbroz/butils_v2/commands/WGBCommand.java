@@ -208,6 +208,17 @@ public abstract class WGBCommand implements CommandExecutor {
 	}
 	
 	/**
+	 * Sends a usage message with the usage in the parameters if the number of
+	 * arguments supplied is less than the minArgs parameter.
+	 */
+	public void checkNumArgs(CommandSender sender, String[] args, int minArgs, String usage) {
+		if(args.length < minArgs) {
+			sender.sendMessage(ChatColor.RED + "Usage: " + usage);
+			throw new CommandInterrupt();
+		}
+	}
+	
+	/**
 	 * Wrapper function for {@link CommandSender#sendMessage(String)} which makes use of the {@link WGBPlugin#getMessage(String, Object...)} method.
 	 */
 	public void sendMessage(CommandSender sender, String path, Object... replace) {
