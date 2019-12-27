@@ -19,6 +19,13 @@ public class ItemUtils {
 	}
 	
 	public static ItemStack itemstackFromConfig(ConfigurationSection conf) {
+		if(VersionUtils.is1_13())
+			return itemstackFromConfig_1_13(conf);
+		else
+			return itemstackFromConfig_pre_1_13(conf);
+	}
+	
+	private static ItemStack itemstackFromConfig_pre_1_13(ConfigurationSection conf) {
 		Material type = getMaterialSafe(conf.getString("type"));
 		
 		int amount = 1;
@@ -43,6 +50,7 @@ public class ItemUtils {
 		if(damage > type.getMaxDurability())
 			damage = type.getMaxDurability();
 		
+		@SuppressWarnings("deprecation")
 		ItemStack is = new ItemStack(type, amount, damage);
 		ItemMeta im = is.getItemMeta();
 		
@@ -64,7 +72,7 @@ public class ItemUtils {
 		return is;
 	}
 	
-	public static ItemStack itemstackFromConfig_1_13(ConfigurationSection conf) {
+	private static ItemStack itemstackFromConfig_1_13(ConfigurationSection conf) {
 		Material type = Material.STONE;
 		if(conf.contains("type")) {
 			type = Material.getMaterial(conf.getString("type").toUpperCase());

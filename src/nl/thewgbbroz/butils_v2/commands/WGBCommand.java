@@ -1,7 +1,5 @@
 package nl.thewgbbroz.butils_v2.commands;
 
-import java.util.List;
-
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
@@ -12,16 +10,17 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 import nl.thewgbbroz.butils_v2.WGBPlugin;
-import nl.thewgbbroz.butils_v2.utils.ArrayUtils;
 
 public abstract class WGBCommand implements CommandExecutor {
-	public static final String NO_PERMISSIONS = ChatColor.RED + "You don't have permissions to do this!";
-	public static final String NEED_PLAYER = ChatColor.RED + "You need to be a player to do this!";
-	public static final String USAGE = ChatColor.RED + "Usage: ";
-	public static final String INVALID_ARGUMENTS = ChatColor.RED + "Invalid arguments!";
+	public static final String NO_PERMISSIONS		= "You don't have permissions to do this!";
+	public static final String NEED_PLAYER			= "You need to be a player to do this!";
+	public static final String USAGE				= "Usage: ";
+	public static final String INVALID_ARGUMENTS	= "Invalid arguments!";
 	
 	private final WGBPlugin plugin;
 	private final String command;
+	
+	private String messagePathPrefix = "";
 	
 	/**
 	 * @param plugin An instance of the plugin object used in some helper functions.
@@ -39,40 +38,15 @@ public abstract class WGBCommand implements CommandExecutor {
 		this(null, command);
 	}
 	
-	@Deprecated
-	public WGBCommand() {
-		this(null, null);
-	}
-	
-	@Deprecated
-	private List<String> permissions = null;
-	
-	@Deprecated
-	private int minArgs = -1;
-	
-	@Deprecated
-	private String usage = null;
-	
 	@Override
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
-		if(permissions != null) {
-			// Check for permissions
-			for(String perm : permissions) {
-				if(!sender.hasPermission(perm)) {
-					sender.sendMessage(NO_PERMISSIONS);
-					return true;
-				}
-			}
-		}
-		
-		if(args.length < minArgs) {
-			sender.sendMessage(USAGE + usage);
-			return true;
-		}
-		
 		try {
 			execute(sender, args);
 		}catch(CommandInterrupt interrupt) {
+			String msg = interrupt.getErrorMessage();
+			if(msg != null) {
+				sender.sendMessage(ChatColor.RED + msg);
+			}
 		}
 		
 		return true;
@@ -85,19 +59,8 @@ public abstract class WGBCommand implements CommandExecutor {
 		return command;
 	}
 	
-	@Deprecated
-	public void setPermissions(String... permissions) {
-		this.permissions = ArrayUtils.arrayToArrayList(permissions);
-	}
-	
-	@Deprecated
-	public void setMinimumArguments(int minArgs) {
-		this.minArgs = minArgs;
-	}
-	
-	@Deprecated
-	public void setUsage(String usage) {
-		this.usage = usage;
+	protected void setMessagePathPrefix(String messagePathPrefix) {
+		this.messagePathPrefix = messagePathPrefix;
 	}
 	
 	/**
@@ -108,12 +71,21 @@ public abstract class WGBCommand implements CommandExecutor {
 	}
 	
 	/**
+	 * Registers this command with the supplied command through the constructor.
+	 */
+	public void register() {
+		if(plugin == null)
+			throw new IllegalStateException("To register the command in this way, please pass the plugin instance through the constructor of the command.");
+		
+		plugin.getCommand(command).setExecutor(this);
+	}
+	
+	/**
 	 * @return A non-null player object representative of the sender.
 	 */
 	public Player checkPlayer(CommandSender sender) {
 		if(!(sender instanceof Player)) {
-			sender.sendMessage(NEED_PLAYER);
-			throw new CommandInterrupt();
+			throw new CommandInterrupt(NEED_PLAYER);
 		}
 		
 		return (Player) sender;
@@ -130,12 +102,13 @@ public abstract class WGBCommand implements CommandExecutor {
 		@SuppressWarnings("deprecation")
 		OfflinePlayer op = Bukkit.getOfflinePlayer(name);
 		
+		String msg;
 		if(op.isOnline() || op.hasPlayedBefore())
-			sender.sendMessage(ChatColor.RED + op.getName() + " isn't online right now!");
+			msg = op.getName() + " isn't online right now!";
 		else
-			sender.sendMessage(ChatColor.RED + op.getName() + " has never played on the server before!");
+			msg = op.getName() + " has never played on the server before!";
 		
-		throw new CommandInterrupt();
+		throw new CommandInterrupt(msg);
 	}
 	
 	/**
@@ -147,9 +120,7 @@ public abstract class WGBCommand implements CommandExecutor {
 		if(op.isOnline() || op.hasPlayedBefore())
 			return op;
 		
-		sender.sendMessage(ChatColor.RED + op.getName() + " has never played on the server before!");
-		
-		throw new CommandInterrupt();
+		throw new CommandInterrupt(op.getName() + " has never played on the server before!");
 	}
 	
 	/**
@@ -157,8 +128,7 @@ public abstract class WGBCommand implements CommandExecutor {
 	 */
 	public void checkPermission(CommandSender sender, String permission) {
 		if(!sender.hasPermission(permission)) {
-			sender.sendMessage(NO_PERMISSIONS);
-			throw new CommandInterrupt();
+			throw new CommandInterrupt(NO_PERMISSIONS);
 		}
 	}
 	
@@ -179,8 +149,7 @@ public abstract class WGBCommand implements CommandExecutor {
 			return Integer.parseInt(number);
 		}catch(NumberFormatException e) {}
 		
-		sender.sendMessage(ChatColor.RED + "Invalid number '" + number + "'!");
-		throw new CommandInterrupt();
+		throw new CommandInterrupt("Invalid number '" + number + "'!");
 	}
 	
 	/**
@@ -191,8 +160,7 @@ public abstract class WGBCommand implements CommandExecutor {
 			return Double.parseDouble(number);
 		}catch(NumberFormatException e) {}
 		
-		sender.sendMessage(ChatColor.RED + "Invalid decimal '" + number + "'!");
-		throw new CommandInterrupt();
+		throw new CommandInterrupt("Invalid decimal '" + number + "'!");
 	}
 	
 	/**
@@ -203,8 +171,7 @@ public abstract class WGBCommand implements CommandExecutor {
 		if(world != null)
 			return world;
 		
-		sender.sendMessage(ChatColor.RED + "Invalid world '" + worldName + "'!");
-		throw new CommandInterrupt();
+		throw new CommandInterrupt("Invalid world '" + worldName + "'!");
 	}
 	
 	/**
@@ -213,17 +180,29 @@ public abstract class WGBCommand implements CommandExecutor {
 	 */
 	public void checkNumArgs(CommandSender sender, String[] args, int minArgs, String usage) {
 		if(args.length < minArgs) {
-			sender.sendMessage(ChatColor.RED + "Usage: " + usage);
-			throw new CommandInterrupt();
+			throw new CommandInterrupt("Usage: " + usage);
 		}
 	}
 	
 	/**
 	 * Wrapper function for {@link CommandSender#sendMessage(String)} which makes use of the {@link WGBPlugin#getMessage(String, Object...)} method.
 	 */
-	public void sendMessage(CommandSender sender, String path, Object... replace) {
+	public void sendMessage(CommandSender sender, String path, boolean addMessagePrefix, Object... replace) {
 		checkPlugin();
+		
+		if(addMessagePrefix)
+			path = messagePathPrefix + path;
+		
 		sender.sendMessage(plugin.getMessage(path, replace));
+	}
+	
+	/**
+	 * Wrapper function for {@link CommandSender#sendMessage(String)} which makes use of the {@link WGBPlugin#getMessage(String, Object...)} method.
+	 * 
+	 * This will always add the message prefix.
+	 */
+	public void sendMessage(CommandSender sender, String path, Object... replace) {
+		sendMessage(sender, path, true, replace);
 	}
 	
 	/**

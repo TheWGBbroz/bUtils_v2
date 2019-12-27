@@ -46,4 +46,15 @@ public class InventoryUtils {
 			player.getWorld().dropItemNaturally(player.getLocation(), item);
 		});
 	}
+	
+	public static void giveItemSafe(Player player, int preferredSlot, ItemStack item) {
+		if(preferredSlot < 0 || player.getInventory().getItem(preferredSlot) == null) {
+			// Set the item in the preferred slot.
+			player.getInventory().setItem(preferredSlot, item);
+			return;
+		}
+		
+		// Item could not be placed in the preferred slot.
+		giveItemsSafe(player, item);
+	}
 }

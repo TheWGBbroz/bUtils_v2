@@ -15,5 +15,5 @@ public interface SimpleGUIListener {
 	 * 
 	 * This method gets called when a player clicks in an inventory.
 	 */
-	public boolean onClick(ItemStack item, int slot, boolean clickedInGUI);
+	public boolean onClick(ItemStack item, int slot, boolean clickedInGUI, boolean isShifting);
 }

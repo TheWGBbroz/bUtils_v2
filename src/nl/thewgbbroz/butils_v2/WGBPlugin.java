@@ -1,5 +1,8 @@
 package nl.thewgbbroz.butils_v2;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -19,15 +22,14 @@ public abstract class WGBPlugin extends JavaPlugin {
 	protected ServiceManager serviceManager;
 	protected CommandManager commandManager;
 	
+	private List<Config> allConfigs = new ArrayList<>();
+	
 	@Override
 	public final void onEnable() {
 		super.onEnable();
 		
 		// Print version info
-		if(Bukkit.getPluginManager().getPlugin("bUtils_development") == null)
-			getLogger().info("Using built-in bUtils v" + BUtils.BUTILS_VERSION + " by TheWGBbroz [test]");
-		else
-			getLogger().info("Using standalone bUtils v" + BUtils.BUTILS_VERSION + " by TheWGBbroz. A standalone version of bUtils is intented to be used in development only.");
+		getLogger().info("Using standalone bUtils v" + BUtils.BUTILS_VERSION + " by TheWGBbroz.");
 		
 		// Load config if present
 		if(getResource("config.yml") != null)
@@ -85,6 +87,17 @@ public abstract class WGBPlugin extends JavaPlugin {
 		}else {
 			getLogger().warning("Commandmanager didn't initialize properly!");
 		}
+	}
+	
+	/**
+	 * Reloads all configuration files and calls {@link ServiceManager#reloadAllServices()}
+	 */
+	public void reload() {
+		// Reload configuration files
+		allConfigs.forEach(Config::reload);
+		
+		// Reload services
+		serviceManager.reloadAllServices();
 	}
 	
 	@Override
@@ -182,5 +195,13 @@ public abstract class WGBPlugin extends JavaPlugin {
 	 */
 	public <E extends WGBService> E getService(Class<? extends E> serviceClass) {
 		return serviceManager.getService(serviceClass);
+	}
+	
+	/**
+	 * Registers a config for this plugin.
+	 * This SHOULD NOT be called manually!
+	 */
+	public void _registerConfig(Config config) {
+		allConfigs.add(config);
 	}
 }

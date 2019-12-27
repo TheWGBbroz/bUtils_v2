@@ -23,6 +23,20 @@ public class MathUtils {
 		return (n - nMin) / (nMax - nMin) * (newMax - newMin) + newMin;
 	}
 	
+	public static double clamp(double n, double min, double max) {
+		if(n < min) return min;
+		if(n > max) return max;
+		
+		return n;
+	}
+	
+	public static int clamp(int n, int min, int max) {
+		if(n < min) return min;
+		if(n > max) return max;
+		
+		return n;
+	}
+	
 	public static boolean isInt(String s) {
 		try {
 			Integer.valueOf(s);

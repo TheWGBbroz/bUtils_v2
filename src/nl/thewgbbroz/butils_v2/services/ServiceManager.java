@@ -50,6 +50,7 @@ public class ServiceManager {
 		try {
 			loadedServices.add(service);
 			service.load();
+			service.reload();
 			
 			return service;
 		}catch(Exception e) {
@@ -142,5 +143,19 @@ public class ServiceManager {
 	 */
 	public List<WGBService> getLoadedServices() {
 		return Collections.unmodifiableList(loadedServices);
+	}
+	
+	/**
+	 * Reloads all loaded services.
+	 */
+	public void reloadAllServices() {
+		loadedServices.forEach(service -> {
+			try {
+				service.reload();
+			}catch(Exception e) {
+				plugin.getLogger().warning("Could not reload service " + service.getClass().getSimpleName() + ": " + e.toString());
+				e.printStackTrace();
+			}
+		});
 	}
 }

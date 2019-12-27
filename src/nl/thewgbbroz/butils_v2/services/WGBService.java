@@ -6,7 +6,6 @@ package nl.thewgbbroz.butils_v2.services;
 public abstract class WGBService {
 	/**
 	 * The load method.
-	 * Nothing should be happening in the constructor, except setting some values which will be passed through the constructor!
 	 */
 	public abstract void load();
 	
@@ -14,4 +13,10 @@ public abstract class WGBService {
 	 * The unload method.
 	 */
 	public abstract void unload();
+	
+	/**
+	 * The reload method.
+	 * The reload method gets called for the first time after the load() method gets called.
+	 */
+	public void reload() {}
 }

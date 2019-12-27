@@ -9,6 +9,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.inventory.InventoryAction;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
@@ -61,6 +62,15 @@ public class SimpleGUIService extends WGBService implements Listener {
 			
 			inInv.remove(e.getPlayer());
 		}
+		
+		// Fix a (visual) bug when closing your inventory at the same tick as grabbing an item.
+		// From the clients perspective the item is gone, while it is not.
+		if(e.getPlayer() instanceof Player) {
+			Bukkit.getScheduler().runTaskLater(plugin, () -> {
+				Player p = (Player) e.getPlayer();
+				p.updateInventory();
+			}, 1);
+		}
 	}
 	
 	@EventHandler
@@ -71,7 +81,8 @@ public class SimpleGUIService extends WGBService implements Listener {
 			SimpleGUIListener listener = inInv.get(e.getWhoClicked());
 			
 			boolean clickedInGUI = e.getRawSlot() >= 0 && e.getRawSlot() < e.getInventory().getSize();
-			if(listener.onClick(e.getCurrentItem(), e.getSlot(), clickedInGUI))
+			boolean shifting = e.getAction() == InventoryAction.MOVE_TO_OTHER_INVENTORY;
+			if(listener.onClick(e.getCurrentItem(), e.getSlot(), clickedInGUI, shifting))
 				e.setCancelled(true);
 		}
 	}
@@ -90,5 +101,16 @@ public class SimpleGUIService extends WGBService implements Listener {
 		inInv.put(p, listener);
 		
 		return inv;
+	}
+	
+	/**
+	 * Closes all open custom inventories.
+	 */
+	public void closeInventories() {
+		List<Player> players = new ArrayList<>(inInv.keySet());
+		players.forEach(Player::closeInventory);
+		
+		// Make sure inInv map is empty
+		inInv.clear();
 	}
 }

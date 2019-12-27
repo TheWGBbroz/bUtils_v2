@@ -22,6 +22,8 @@ public class Config {
 		this.file = new File(plugin.getDataFolder(), name);
 		
 		saveDefault();
+		
+		plugin._registerConfig(this);
 	}
 	
 	/**
