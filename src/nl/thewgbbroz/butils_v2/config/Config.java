@@ -22,6 +22,7 @@ public class Config {
 		this.file = new File(plugin.getDataFolder(), name);
 		
 		saveDefault();
+		reload();
 		
 		plugin._registerConfig(this);
 	}
@@ -68,7 +69,9 @@ public class Config {
 	 * Saves the default config values, located in the plugins jar file, if the config file does not exist on the disk.
 	 */
 	public void saveDefault() {
-		if(!file.exists())
+		if(!file.exists()) {
 			plugin.saveResource(name, false);
+			reload();
+		}
 	}
 }
