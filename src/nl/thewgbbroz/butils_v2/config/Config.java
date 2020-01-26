@@ -22,7 +22,6 @@ public class Config {
 		this.file = new File(plugin.getDataFolder(), name);
 		
 		saveDefault();
-		reload();
 		
 		plugin._registerConfig(this);
 	}
@@ -33,13 +32,15 @@ public class Config {
 	public void reload() {
 		config = YamlConfiguration.loadConfiguration(file);
 		
-		try{
-			Reader defConfigStream = new InputStreamReader(plugin.getResource(name), "UTF8");
-			YamlConfiguration defConfig = YamlConfiguration.loadConfiguration(defConfigStream);
-			config.setDefaults(defConfig);
-		}catch(IOException e) {
-			plugin.getLogger().severe("Could not reload config '" + name + "'!");
-			e.printStackTrace();
+		if(hasDefaults()) {
+			try {
+				Reader defConfigStream = new InputStreamReader(plugin.getResource(name), "UTF8");
+				YamlConfiguration defConfig = YamlConfiguration.loadConfiguration(defConfigStream);
+				config.setDefaults(defConfig);
+			}catch(IOException e) {
+				plugin.getLogger().severe("Could not reload config '" + name + "'!");
+				e.printStackTrace();
+			}
 		}
 	}
 	
@@ -70,8 +71,22 @@ public class Config {
 	 */
 	public void saveDefault() {
 		if(!file.exists()) {
-			plugin.saveResource(name, false);
-			reload();
+			if(hasDefaults()) {
+				plugin.saveResource(name, false);
+			}else {
+				try {
+					file.createNewFile();
+				}catch(IOException e) {
+					e.printStackTrace();
+				}
+			}
 		}
+	}
+	
+	/**
+	 * @return Whether the config file has defaults in the jar file.
+	 */
+	public boolean hasDefaults() {
+		return plugin.getResource(name) != null;
 	}
 }

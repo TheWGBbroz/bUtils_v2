@@ -30,6 +30,7 @@ public class MessagesConfig extends Config {
 	public void reload() {
 		super.reload();
 		
+		System.out.println(cache);
 		cache.clear();
 		
 		// Use Bukkit#getConsoleSender to display colors in console.

@@ -23,6 +23,10 @@ public class MathUtils {
 		return (n - nMin) / (nMax - nMin) * (newMax - newMin) + newMin;
 	}
 	
+	public static float map(float n, float nMin, float nMax, float newMin, float newMax) {
+		return (n - nMin) / (nMax - nMin) * (newMax - newMin) + newMin;
+	}
+	
 	public static double clamp(double n, double min, double max) {
 		if(n < min) return min;
 		if(n > max) return max;

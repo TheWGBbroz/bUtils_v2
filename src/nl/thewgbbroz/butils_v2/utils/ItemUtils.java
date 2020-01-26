@@ -18,61 +18,8 @@ public class ItemUtils {
 	private ItemUtils() {
 	}
 	
+	@SuppressWarnings("deprecation")
 	public static ItemStack itemstackFromConfig(ConfigurationSection conf) {
-		if(VersionUtils.is1_13())
-			return itemstackFromConfig_1_13(conf);
-		else
-			return itemstackFromConfig_pre_1_13(conf);
-	}
-	
-	private static ItemStack itemstackFromConfig_pre_1_13(ConfigurationSection conf) {
-		Material type = getMaterialSafe(conf.getString("type"));
-		
-		int amount = 1;
-		if(conf.contains("amount")) {
-			amount = conf.getInt("amount");
-			
-			if(amount < 1)
-				amount = 1;
-			if(amount > type.getMaxStackSize())
-				amount = type.getMaxStackSize();
-		}
-		
-		short damage = 0;
-		if(conf.contains("damage")) {
-			damage = (short) conf.getInt("damage");
-		}else if(conf.contains("durability")) {
-			damage = (short) conf.getInt("durability");
-		}
-		
-		if(damage < 0)
-			damage = 0;
-		if(damage > type.getMaxDurability())
-			damage = type.getMaxDurability();
-		
-		@SuppressWarnings("deprecation")
-		ItemStack is = new ItemStack(type, amount, damage);
-		ItemMeta im = is.getItemMeta();
-		
-		if(conf.contains("name")) {
-			String name = conf.getString("name");
-			name = ChatColor.translateAlternateColorCodes('&', name);
-			
-			im.setDisplayName(ChatColor.RESET + name);
-		}
-		
-		if(conf.contains("lore")) {
-			List<String> lore = conf.getStringList("lore");
-			lore.replaceAll(str -> ChatColor.translateAlternateColorCodes('&', str));
-			
-			im.setLore(lore);
-		}
-		
-		is.setItemMeta(im);
-		return is;
-	}
-	
-	private static ItemStack itemstackFromConfig_1_13(ConfigurationSection conf) {
 		Material type = Material.STONE;
 		if(conf.contains("type")) {
 			type = Material.getMaterial(conf.getString("type").toUpperCase());
@@ -93,7 +40,27 @@ public class ItemUtils {
 				amount = type.getMaxStackSize();
 		}
 		
-		ItemStack is = new ItemStack(type, amount);
+		ItemStack is;
+		if(VersionUtils.is1_13()) {
+			// 1.13+ implementation
+			is = new ItemStack(type, amount);
+		}else {
+			// Pre 1.13 implementation
+			short damage = 0;
+			if(conf.contains("damage")) {
+				damage = (short) conf.getInt("damage");
+			}else if(conf.contains("durability")) {
+				damage = (short) conf.getInt("durability");
+			}
+			
+			if(damage < 0)
+				damage = 0;
+			if(damage > type.getMaxDurability())
+				damage = type.getMaxDurability();
+			
+			is = new ItemStack(type, amount, damage);
+		}
+		
 		ItemMeta im = is.getItemMeta();
 		
 		if(conf.contains("name")) {
@@ -114,12 +81,15 @@ public class ItemUtils {
 		return is;
 	}
 	
+	@SuppressWarnings("deprecation")
 	public static void itemstackToConfig(ItemStack item, ConfigurationSection conf) {
 		conf.set("type", item.getType().name());
 		
 		conf.set("amount", item.getAmount());
 		
-		conf.set("damage", item.getDurability());
+		if(!VersionUtils.is1_13()) {
+			conf.set("damage", item.getDurability());
+		}
 		
 		if(item.hasItemMeta()) {
 			ItemMeta im = item.getItemMeta();
@@ -149,6 +119,7 @@ public class ItemUtils {
 		}
 	}
 	
+	@SuppressWarnings("deprecation")
 	public static ItemStack parseItemStack(String s) {
 		// name amount damage name:___ ench:___ ench:___ lore:_,_,_
 		
@@ -174,15 +145,20 @@ public class ItemUtils {
 			}catch(Exception e) {}
 		}
 		
-		short damage = 0;
-		if(parts.length > 2) {
-			// Damage
-			try{
-				damage = Short.parseShort(parts[2]);
-			}catch(Exception e) {}
+		ItemStack is;
+		if(VersionUtils.is1_13()) {
+			short damage = 0;
+			if(parts.length > 2) {
+				// Damage
+				try{
+					damage = Short.parseShort(parts[2]);
+				}catch(Exception e) {}
+			}
+			
+			is = new ItemStack(mat, amount, damage);
+		}else {
+			is = new ItemStack(mat, amount);
 		}
-		
-		ItemStack is = new ItemStack(mat, amount, damage);
 		
 		if(parts.length > 3) {
 			ItemMeta im = is.getItemMeta();
@@ -229,6 +205,7 @@ public class ItemUtils {
 		return is;
 	}
 	
+	@SuppressWarnings("deprecation")
 	public static String stringifyItemStack(ItemStack is) {
 		// item amount damage name:___ ench:___ ench:___ lore:_,_,_
 		
@@ -239,7 +216,10 @@ public class ItemUtils {
 		
 		sb.append(is.getType().name());
 		sb.append(" " + is.getAmount());
-		sb.append(" " + is.getDurability());
+		
+		if(!VersionUtils.is1_13()) {
+			sb.append(" " + is.getDurability());
+		}
 		
 		if(is.hasItemMeta() && is.getItemMeta().hasDisplayName())
 			sb.append(" name:" + is.getItemMeta().getDisplayName().replace(" ", "_"));
@@ -263,8 +243,15 @@ public class ItemUtils {
 		return sb.toString();
 	}
 	
+	@SuppressWarnings("deprecation")
 	public static ItemStack createItem(Material type, int amount, int damage, String name, List<String> lore, Consumer<ItemMeta> customMetaConsumer) {
-		ItemStack is = new ItemStack(type, amount, (short) damage);
+		ItemStack is;
+		if(!VersionUtils.is1_13() && damage >= 0) {
+			is = new ItemStack(type, amount, (short) damage);
+		}else {
+			is = new ItemStack(type, amount);
+		}
+		
 		ItemMeta im = is.getItemMeta();
 		
 		if(name != null) {
@@ -299,6 +286,24 @@ public class ItemUtils {
 		return createItem(typeName, amount, damage, name, lore, null);
 	}
 	
+	// -- 1.13 methods (without the damage argument)
+	public static ItemStack createItem(Material type, int amount, String name, List<String> lore, Consumer<ItemMeta> customMetaConsumer) {
+		return createItem(type, amount, -1, name, lore, customMetaConsumer);
+	}
+	
+	public static ItemStack createItem(String typeName, int amount, String name, List<String> lore, Consumer<ItemMeta> customMetaConsumer) {
+		return createItem(typeName, amount, -1, name, lore, customMetaConsumer);
+	}
+	
+	public static ItemStack createItem(Material type, int amount, String name, List<String> lore) {
+		return createItem(type, amount, -1, name, lore, null);
+	}
+	
+	public static ItemStack createItem(String typeName, int amount, String name, List<String> lore) {
+		return createItem(typeName, amount, -1, name, lore, null);
+	}
+	// --
+	
 	public static final int CHECK_MATERIAL			= 0;
 	public static final int CHECK_DURABILITY		= 1;
 	public static final int CHECK_AMOUNT			= 2;
@@ -307,6 +312,7 @@ public class ItemUtils {
 	public static final int CHECK_ENCHANTS			= 5;
 	public static final int CHECK_ENCHANT_LEVELS	= 6;
 	
+	@SuppressWarnings("deprecation")
 	public static boolean isSimilar(ItemStack a, ItemStack b, int... checkAttributes) {
 		if(a == null || b == null) {
 			return a == b;
@@ -315,8 +321,10 @@ public class ItemUtils {
 		if(ArrayUtils.contains(checkAttributes, CHECK_MATERIAL) && !a.getType().equals(b.getType()))
 			return false;
 		
-		if(ArrayUtils.contains(checkAttributes, CHECK_DURABILITY) && a.getDurability() != b.getDurability())
-			return false;
+		if(!VersionUtils.is1_13()) {
+			if(ArrayUtils.contains(checkAttributes, CHECK_DURABILITY) && a.getDurability() != b.getDurability())
+				return false;
+		}
 		
 		if(ArrayUtils.contains(checkAttributes, CHECK_AMOUNT) && a.getAmount() != b.getAmount())
 			return false;
