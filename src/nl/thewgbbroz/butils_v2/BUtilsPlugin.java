@@ -8,6 +8,8 @@ public class BUtilsPlugin extends WGBPlugin {
 	@Override
 	public void wgb_onEnable() {
 		BUtilsPlugin.instance = this;
+		
+		enableMetrics(6449);
 	}
 
 	@Override

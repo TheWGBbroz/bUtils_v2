@@ -12,6 +12,9 @@ import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.Recipe;
+import org.bukkit.inventory.ShapedRecipe;
+import org.bukkit.inventory.ShapelessRecipe;
 import org.bukkit.inventory.meta.ItemMeta;
 
 public class ItemUtils {
@@ -454,5 +457,73 @@ public class ItemUtils {
 			
 			items[i] = items[i].clone();
 		}
+	}
+	
+	public static ItemStack[] recipeToInventory(Recipe recipe) {
+		ItemStack[] res = new ItemStack[9];
+		
+		if(recipe instanceof ShapedRecipe) {
+			ShapedRecipe shaped = (ShapedRecipe) recipe;
+			
+			String[] shape;
+			if(shaped.getShape().length == 0) {
+				shape = new String[] {"", "", ""};
+			}else if(shaped.getShape().length == 1) {
+				shape = new String[] {
+						"",
+						shaped.getShape()[0],
+						""
+				};
+			}else if(shaped.getShape().length == 2) {
+				shape = new String[] {
+						"",
+						shaped.getShape()[0],
+						shaped.getShape()[1]
+				};
+			}else {
+				shape = new String[] {
+						shaped.getShape()[0],
+						shaped.getShape()[1],
+						shaped.getShape()[2]
+				};
+			}
+			
+			StringBuilder shapeString = new StringBuilder(9);
+			for(int i = 0; i < shape.length; i++) {
+				String s = shape[i];
+				
+				if(s.length() == 0) {
+					s = "   ";
+				}else if(s.length() == 1) {
+					s = " " + s + " ";
+				}else if(s.length() == 2) {
+					s = s + " ";
+				}else if(s.length() > 3) {
+					s = s.substring(0, 3);
+				}
+				
+				shapeString.append(s);
+			}
+			
+			for(int i = 0; i < res.length; i++) {
+				char c = shapeString.charAt(i);
+				ItemStack item = shaped.getIngredientMap().get(c);
+				if(item == null) {
+					continue;
+				}
+				
+				res[i] = item.clone();
+			}
+		}else if(recipe instanceof ShapelessRecipe) {
+			ShapelessRecipe shapeless = (ShapelessRecipe) recipe;
+			for(int i = 0; i < shapeless.getIngredientList().size(); i++) {
+				res[i] = shapeless.getIngredientList().get(i).clone();
+			}
+		}
+		else {
+			throw new UnsupportedOperationException("Recipe type not implemented.");
+		}
+		
+		return res;
 	}
 }

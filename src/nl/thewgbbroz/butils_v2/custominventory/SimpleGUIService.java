@@ -90,17 +90,27 @@ public class SimpleGUIService extends WGBService implements Listener {
 	/**
 	 * Open an inventory.
 	 */
-	public Inventory openInventory(Player p, ItemStack[] contents, String title, SimpleGUIListener listener) {
+	public Inventory openInventory(Player player, ItemStack[] contents, String title, SimpleGUIListener listener) {
 		if(contents.length % 9 != 0)
 			throw new IllegalArgumentException("contents.length must be divisible by 9!");
 		
 		Inventory inv = Bukkit.createInventory(null, contents.length, title);
 		inv.setContents(contents);
 		
-		p.openInventory(inv);
-		inInv.put(p, listener);
+		player.openInventory(inv);
+		inInv.put(player, listener);
 		
 		return inv;
+	}
+	
+	/**
+	 * Open an inventory.
+	 */
+	public Inventory openInventory(Player player, Inventory inventory, SimpleGUIListener listener) {
+		player.openInventory(inventory);
+		inInv.put(player, listener);
+		
+		return inventory;
 	}
 	
 	/**

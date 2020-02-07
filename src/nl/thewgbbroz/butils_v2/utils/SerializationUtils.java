@@ -12,6 +12,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.inventory.ItemStack;
 
 public class SerializationUtils {
 	private SerializationUtils() {
@@ -67,6 +68,22 @@ public class SerializationUtils {
 		}
 		
 		return world.getBlockAt(x, y, z);
+	}
+	
+	public static void serializeItemStack(DataOutputStream dos, ItemStack itemStack) throws IOException {
+		// ItemUtils#serializeItemStack saves the item to a temporary configuration.
+		String itemStackString = ItemUtils.serializeItemStack(itemStack);
+		
+		dos.writeUTF(itemStackString);
+	}
+	
+	public static ItemStack deserializeItemStack(DataInputStream dis) throws IOException {
+		String itemStackString = dis.readUTF();
+		
+		// ItemUtils#deserializeItemStack reads the item from a temporary configuration.
+		ItemStack itemStack = ItemUtils.deserializeItemStack(itemStackString);
+		
+		return itemStack;
 	}
 	
 	public static <E> void serializeList(DataOutputStream dos, List<E> list, BiConsumer<DataOutputStream, E> serializer) throws IOException {

@@ -12,6 +12,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import nl.thewgbbroz.butils_v2.commands.CommandManager;
 import nl.thewgbbroz.butils_v2.config.Config;
 import nl.thewgbbroz.butils_v2.config.MessagesConfig;
+import nl.thewgbbroz.butils_v2.metrics.Metrics;
 import nl.thewgbbroz.butils_v2.services.ServiceManager;
 import nl.thewgbbroz.butils_v2.services.WGBService;
 
@@ -22,6 +23,8 @@ public abstract class WGBPlugin extends JavaPlugin {
 	protected ServiceManager serviceManager;
 	protected CommandManager commandManager;
 	
+	protected Metrics metrics = null;
+	
 	private List<Config> allConfigs = new ArrayList<>();
 	
 	@Override
@@ -29,7 +32,16 @@ public abstract class WGBPlugin extends JavaPlugin {
 		super.onEnable();
 		
 		// Print version info
-		getLogger().info("Using standalone bUtils v" + BUtils.BUTILS_VERSION + " by TheWGBbroz.");
+		if(this.getClass() == BUtilsPlugin.class) {
+			// This is bUtils!
+			getLogger().info("Starting bUtils_v2 v" + getDescription().getVersion() + " (general utility plugin by TheWGBbroz)");
+		}else {
+			if(BUtilsPlugin.instance() == null) {
+				getLogger().severe("Standalone bUtils_v2 is not loaded yet, but this plugin depends on it. Problems can occur if this is not fixed!");
+			}else {
+				getLogger().info("Using standalone bUtils_v2 v" + BUtilsPlugin.instance().getDescription().getVersion() + " by TheWGBbroz.");
+			}
+		}
 		
 		// Load config if present
 		if(getResource("config.yml") != null)
@@ -88,6 +100,8 @@ public abstract class WGBPlugin extends JavaPlugin {
 			getLogger().warning("Commandmanager didn't initialize properly!");
 		}
 	}
+	
+	
 	
 	/**
 	 * Reloads all configuration files and calls {@link ServiceManager#reloadAllServices()}
@@ -157,6 +171,36 @@ public abstract class WGBPlugin extends JavaPlugin {
 			return path;
 		
 		return msgConfig.getMessage(path, replace);
+	}
+	
+	/**
+	 * @return The metrics object of this plugin
+	 */
+	public Metrics getMetrics() {
+		return metrics;
+	}
+	
+	/**
+	 * @return Whether or not this plugin has metrics
+	 */
+	public boolean hasMetrics() {
+		return metrics != null;
+	}
+	
+	/**
+	 * @param pluginId The plugin ID
+	 * 
+	 * Enables metrics for this plugin.
+	 */
+	protected void enableMetrics(int pluginId) {
+		if(metrics != null) {
+			throw new IllegalStateException("Metrics have already been enabled!");
+		}
+		
+		metrics = new Metrics(this, pluginId);
+		if(!metrics.isEnabled()) {
+			getLogger().warning("Metrics is not enabled. Enabling this would do the plugin developer a huge favor!");
+		}
 	}
 	
 	/**
