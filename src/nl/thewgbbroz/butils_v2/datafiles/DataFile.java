@@ -97,6 +97,10 @@ public class DataFile {
 	 */
 	public void save(boolean force) {
 		if(force || saveRunnable == null) {
+			if(!file.getParentFile().exists() || !file.getParentFile().isDirectory()) {
+				file.getParentFile().mkdirs();
+			}
+			
 			DataOutputStream dos = null;
 			try {
 				dos = new DataOutputStream(new FileOutputStream(file));

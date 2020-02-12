@@ -1,16 +1,20 @@
 package nl.thewgbbroz.butils_v2.services;
 
 import java.lang.reflect.Constructor;
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 import nl.thewgbbroz.butils_v2.WGBPlugin;
 
 public class ServiceManager {
 	private final WGBPlugin plugin;
 	
-	private List<WGBService> loadedServices = new ArrayList<>();
+	/**
+	 * Use a HashMap to get lookups to constant time, O(1).
+	 */
+	private Map<Class<? extends WGBService>, WGBService> loadedServices = new HashMap<>();
 	
 	public ServiceManager(WGBPlugin plugin) {
 		this.plugin = plugin;
@@ -20,7 +24,7 @@ public class ServiceManager {
 	 * Unloads all the services
 	 */
 	public void unload() {
-		for(WGBService service : loadedServices) {
+		for(WGBService service : loadedServices.values()) {
 			try {
 				service.unload();
 			}catch(Exception e) {
@@ -48,7 +52,8 @@ public class ServiceManager {
 			throw new IllegalArgumentException("Can't load a service if it's already loaded!");
 		
 		try {
-			loadedServices.add(service);
+			loadedServices.put(service.getClass(), service);
+			
 			service.load();
 			service.reload();
 			
@@ -115,7 +120,7 @@ public class ServiceManager {
 			e.printStackTrace();
 		}
 		
-		loadedServices.remove(service);
+		loadedServices.remove(service.getClass());
 	}
 	
 	/**
@@ -123,12 +128,7 @@ public class ServiceManager {
 	 */
 	@SuppressWarnings("unchecked")
 	public <E extends WGBService> E getService(Class<? extends E> serviceClass) {
-		for(WGBService service : loadedServices) {
-			if(service.getClass() == serviceClass)
-				return (E) service;
-		}
-		
-		return null;
+		return (E) loadedServices.get(serviceClass);
 	}
 	
 	/**
@@ -141,15 +141,15 @@ public class ServiceManager {
 	/**
 	 * @return A non-modifiable list of all loaded services.
 	 */
-	public List<WGBService> getLoadedServices() {
-		return Collections.unmodifiableList(loadedServices);
+	public Collection<WGBService> getLoadedServices() {
+		return Collections.unmodifiableCollection(loadedServices.values());
 	}
 	
 	/**
 	 * Reloads all loaded services.
 	 */
 	public void reloadAllServices() {
-		loadedServices.forEach(service -> {
+		loadedServices.values().forEach(service -> {
 			try {
 				service.reload();
 			}catch(Exception e) {
