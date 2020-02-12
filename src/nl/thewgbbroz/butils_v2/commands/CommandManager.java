@@ -1,14 +1,14 @@
 package nl.thewgbbroz.butils_v2.commands;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 import nl.thewgbbroz.butils_v2.WGBPlugin;
 
 public class CommandManager {
 	private final WGBPlugin plugin;
 	
-	private List<WGBCommand> registeredCommands = new ArrayList<>();
+	private Set<WGBCommand> registeredCommands = new HashSet<>();
 	
 	public CommandManager(WGBPlugin plugin) {
 		this.plugin = plugin;

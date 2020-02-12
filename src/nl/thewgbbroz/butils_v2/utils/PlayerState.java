@@ -1,7 +1,7 @@
 package nl.thewgbbroz.butils_v2.utils;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.bukkit.GameMode;
 import org.bukkit.Location;
@@ -37,7 +37,7 @@ public class PlayerState {
 	private float exp;
 	private int level;
 	
-	private List<PotionEffect> activePotionEffects = new ArrayList<>();
+	private Set<PotionEffect> activePotionEffects = new HashSet<>();
 	
 	private boolean canPickupItems;
 	private float fallDistance;

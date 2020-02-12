@@ -1,7 +1,7 @@
 package nl.thewgbbroz.butils_v2;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -25,7 +25,7 @@ public abstract class WGBPlugin extends JavaPlugin {
 	
 	protected Metrics metrics = null;
 	
-	private List<Config> allConfigs = new ArrayList<>();
+	private Set<Config> allConfigs = new HashSet<>();
 	
 	@Override
 	public final void onEnable() {
