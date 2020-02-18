@@ -7,10 +7,9 @@ public class VersionUtils {
 	}
 	
 	private static boolean hasCachedVersion = false;
+	
 	private static String cachedVersion;
-	
 	private static int major, minor, patch;
-	
 	private static boolean is113;
 	
 	private static void cacheVersion() {
@@ -24,13 +23,12 @@ public class VersionUtils {
 				
 				String[] versionParts = version.split("\\.");
 				
-				major = Integer.parseInt(versionParts[0]);
-				minor = Integer.parseInt(versionParts[1]);
-				patch = Integer.parseInt(versionParts[2]);
+				major = Integer.parseInt(versionParts.length < 1 ? "0" : versionParts[0]);
+				minor = Integer.parseInt(versionParts.length < 2 ? "0" : versionParts[1]);
+				patch = Integer.parseInt(versionParts.length < 3 ? "0" : versionParts[2]);
 				
 				is113 = (major == 1 && minor >= 13) || (major > 1);
 			}catch(Exception e) {
-				e.printStackTrace();
 				Bukkit.getLogger().warning("Could not fetch version from version string '" + Bukkit.getBukkitVersion() + "'! " + e.toString());
 				
 				cachedVersion = null;
