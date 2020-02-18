@@ -17,6 +17,11 @@ import nl.thewgbbroz.butils_v2.services.ServiceManager;
 import nl.thewgbbroz.butils_v2.services.WGBService;
 
 public abstract class WGBPlugin extends JavaPlugin {
+	private static final String[] LANG_FILE_NAMES = {
+			"messages.yml",
+			"lang.yml"
+	};
+	
 	protected Config config;
 	protected MessagesConfig msgConfig;
 	
@@ -44,12 +49,17 @@ public abstract class WGBPlugin extends JavaPlugin {
 		}
 		
 		// Load config if present
-		if(getResource("config.yml") != null)
+		if(getResource("config.yml") != null) {
 			config = new Config(this, "config.yml");
+		}
 		
-		// Load messages config if present
-		if(getResource("messages.yml") != null)
-			msgConfig = new MessagesConfig(this, "messages.yml");
+		// Load lang config if present
+		for(String fileName : LANG_FILE_NAMES) {
+			if(getResource(fileName) != null) {
+				msgConfig = new MessagesConfig(this, fileName);
+				break;
+			}
+		}
 		
 		// Initialize managers
 		serviceManager = new ServiceManager(this);

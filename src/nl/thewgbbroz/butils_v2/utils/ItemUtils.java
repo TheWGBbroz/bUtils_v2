@@ -56,10 +56,10 @@ public class ItemUtils {
 				damage = (short) conf.getInt("durability");
 			}
 			
-			if(damage < 0)
-				damage = 0;
-			if(damage > type.getMaxDurability())
-				damage = type.getMaxDurability();
+//			if(damage < 0)
+//				damage = 0;
+//			if(damage > type.getMaxDurability())
+//				damage = type.getMaxDurability();
 			
 			is = new ItemStack(type, amount, damage);
 		}
@@ -525,5 +525,11 @@ public class ItemUtils {
 		}
 		
 		return res;
+	}
+	
+	public static void setDisplayName(ItemStack is, String name) {
+		ItemMeta im = is.getItemMeta();
+		im.setDisplayName(name);
+		is.setItemMeta(im);
 	}
 }

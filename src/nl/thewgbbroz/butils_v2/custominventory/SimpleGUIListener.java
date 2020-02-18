@@ -11,7 +11,7 @@ public interface SimpleGUIListener {
 	public void onClose(ItemStack[] contents);
 	
 	/**
-	 * @return If this returns TRUE, the event will be canceled.
+	 * @return If this returns <code>true</code>, the event will be canceled.
 	 * 
 	 * This method gets called when a player clicks in an inventory.
 	 */
