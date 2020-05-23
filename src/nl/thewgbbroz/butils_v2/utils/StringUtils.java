@@ -72,4 +72,45 @@ public class StringUtils {
 		
 		return false;
 	}
+	
+	/**
+	 * Format: 10h, 5m, 25s, etc.
+	 * 
+	 * s = seconds
+	 * m = minutes
+	 * h = hours
+	 * d = days
+	 * w = weeks
+	 * M = months
+	 * y = years
+	 */
+	public static int textToSeconds(String str) {
+		try {
+			char unit = str.charAt(str.length() - 1);
+			int amount = Integer.parseInt(str.substring(0, str.length() - 1));
+			
+			switch(unit) {
+			case 's':
+				return amount;
+			case 'm':
+				return amount * 60;
+			case 'h':
+				return amount * 60 * 60;
+			case 'd':
+				return amount * 60 * 60 * 24;
+			case 'w':
+				return amount * 60 * 60 * 24 * 7;
+			case 'M':
+				return amount * 60 * 60 * 24 * 30;
+			case 'y':
+				return amount * 60 * 60 * 24 * 365;
+			}
+			
+			// No or invalid unit.
+			
+			return Integer.parseInt(str);
+		}catch(Exception e) {}
+		
+		return 0;
+	}
 }

@@ -12,11 +12,6 @@ import org.bukkit.entity.Player;
 import nl.thewgbbroz.butils_v2.WGBPlugin;
 
 public abstract class WGBCommand implements CommandExecutor {
-	public static final String NO_PERMISSIONS		= "You don't have permissions to do this!";
-	public static final String NEED_PLAYER			= "You need to be a player to do this!";
-	public static final String USAGE				= "Usage: ";
-	public static final String INVALID_ARGUMENTS	= "Invalid arguments!";
-	
 	private final WGBPlugin plugin;
 	private final String command;
 	
@@ -85,7 +80,9 @@ public abstract class WGBCommand implements CommandExecutor {
 	 */
 	public Player checkPlayer(CommandSender sender) {
 		if(!(sender instanceof Player)) {
-			throw new CommandInterrupt(NEED_PLAYER);
+			throw new CommandInterrupt(
+					plugin.getMessageOrDefault("commands.need-player", "&cYou need to be a player to do this.")
+			);
 		}
 		
 		return (Player) sender;
@@ -103,10 +100,11 @@ public abstract class WGBCommand implements CommandExecutor {
 		OfflinePlayer op = Bukkit.getOfflinePlayer(name);
 		
 		String msg;
-		if(op.isOnline() || op.hasPlayedBefore())
-			msg = op.getName() + " isn't online right now!";
-		else
-			msg = op.getName() + " has never played on the server before!";
+		if(op.isOnline() || op.hasPlayedBefore()) {
+			msg = plugin.getMessageOrDefault("commands.not-online", "&c%1 isn't online right now!", op.getName());
+		}else {
+			msg = plugin.getMessageOrDefault("commands.never-played", "&c%1 has never played on this server before!", op.getName());
+		}
 		
 		throw new CommandInterrupt(msg);
 	}
@@ -120,25 +118,37 @@ public abstract class WGBCommand implements CommandExecutor {
 		if(op.isOnline() || op.hasPlayedBefore())
 			return op;
 		
-		throw new CommandInterrupt(op.getName() + " has never played on the server before!");
+		throw new CommandInterrupt(
+				plugin.getMessageOrDefault("commands.never-played", "&c%1 has never played on this server before!", op.getName())
+		);
+	}
+	
+	/**
+	 * Checks if the sender has the required permissions.
+	 */
+	public void checkPermission(CommandSender sender, String... permissions) {
+		for(String permission : permissions) {
+			if(!sender.hasPermission(permission)) {
+				throw new CommandInterrupt(
+						plugin.getMessageOrDefault("commands.no-permissions", "&cYou don't have permissions to do this!")
+				);
+			}
+		}
 	}
 	
 	/**
 	 * Checks if the sender has the required permission.
 	 */
 	public void checkPermission(CommandSender sender, String permission) {
-		if(!sender.hasPermission(permission)) {
-			throw new CommandInterrupt(NO_PERMISSIONS);
-		}
+		checkPermission(sender, new String[] { permission });
 	}
 	
 	/**
 	 * Checks if the sender has the required permissions.
 	 */
+	@Deprecated
 	public void checkPermissions(CommandSender sender, String... permissions) {
-		for(String perm : permissions) {
-			checkPermission(sender, perm);
-		}
+		checkPermission(sender, permissions);
 	}
 	
 	/**
@@ -149,7 +159,9 @@ public abstract class WGBCommand implements CommandExecutor {
 			return Integer.parseInt(number);
 		}catch(NumberFormatException e) {}
 		
-		throw new CommandInterrupt("Invalid number '" + number + "'!");
+		throw new CommandInterrupt(
+				plugin.getMessageOrDefault("commands.invalid-int", "Invalid number '%1'!", number)
+		);
 	}
 	
 	/**
@@ -160,7 +172,9 @@ public abstract class WGBCommand implements CommandExecutor {
 			return Double.parseDouble(number);
 		}catch(NumberFormatException e) {}
 		
-		throw new CommandInterrupt("Invalid decimal '" + number + "'!");
+		throw new CommandInterrupt(
+				plugin.getMessageOrDefault("commands.invalid-double", "Invalid decimal '%1'!", number)
+		);
 	}
 	
 	/**
@@ -171,7 +185,9 @@ public abstract class WGBCommand implements CommandExecutor {
 		if(world != null)
 			return world;
 		
-		throw new CommandInterrupt("Invalid world '" + worldName + "'!");
+		throw new CommandInterrupt(
+				plugin.getMessageOrDefault("commands.invalid-world", "Invalid world '%1'!", worldName)
+		);
 	}
 	
 	/**
@@ -180,18 +196,21 @@ public abstract class WGBCommand implements CommandExecutor {
 	 */
 	public void checkNumArgs(CommandSender sender, String[] args, int minArgs, String usage) {
 		if(args.length < minArgs) {
-			throw new CommandInterrupt("Usage: " + usage);
+			throw new CommandInterrupt(
+					plugin.getMessageOrDefault("commands.usage", "Usage: %1", usage)
+			);
 		}
 	}
 	
 	/**
 	 * Wrapper function for {@link CommandSender#sendMessage(String)} which makes use of the {@link WGBPlugin#getMessage(String, Object...)} method.
 	 */
-	public void sendMessage(CommandSender sender, String path, boolean addMessagePrefix, Object... replace) {
+	private void _sendMessage(CommandSender sender, String path, boolean addMessagePrefix, Object... replace) {
 		checkPlugin();
 		
-		if(addMessagePrefix)
+		if(addMessagePrefix) {
 			path = messagePathPrefix + path;
+		}
 		
 		sender.sendMessage(plugin.getMessage(path, replace));
 	}
@@ -199,18 +218,28 @@ public abstract class WGBCommand implements CommandExecutor {
 	/**
 	 * Wrapper function for {@link CommandSender#sendMessage(String)} which makes use of the {@link WGBPlugin#getMessage(String, Object...)} method.
 	 * 
-	 * This will always add the message prefix.
+	 * This will add the message prefix.
 	 */
 	public void sendMessage(CommandSender sender, String path, Object... replace) {
-		sendMessage(sender, path, true, replace);
+		_sendMessage(sender, path, true, replace);
+	}
+	
+	/**
+	 * Wrapper function for {@link CommandSender#sendMessage(String)} which makes use of the {@link WGBPlugin#getMessage(String, Object...)} method.
+	 * 
+	 * This will not add the message prefix.
+	 */
+	public void sendMessageNoPrefix(CommandSender sender, String path, Object... replace) {
+		_sendMessage(sender, path, false, replace);
 	}
 	
 	/**
 	 * Helper function for the helper functions. Checks if a plugin was passed through the constructor
 	 */
 	private void checkPlugin() {
-		if(plugin == null)
+		if(plugin == null) {
 			throw new IllegalStateException("Please pass through a plugin object in the command constructor to make use of this helper method.");
+		}
 	}
 	
 	/**

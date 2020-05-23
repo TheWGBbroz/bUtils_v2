@@ -94,8 +94,9 @@ public class TimeSelection {
 			long value = this.seconds;
 			
 			for(Unit unit : Unit.sorted()) {
-				if(!allowedUnits.contains(unit))
+				if(!allowedUnits.contains(unit)) {
 					continue;
+				}
 				
 				long numUnits = value / unit.secondsInUnit;
 				value -= numUnits * unit.secondsInUnit;
@@ -165,6 +166,19 @@ public class TimeSelection {
 			long numUnits = subdivided.get(unit);
 			
 			sb.append(unit.friendlyName(numUnits));
+		}
+		
+		if(units.isEmpty()) {
+			Unit lowestUnit = null;
+			for(int i = Unit.sorted().size() - 1; i >= 0; i--) {
+				Unit unit = Unit.sorted().get(i);
+				if(allowedUnits.contains(unit)) {
+					lowestUnit = unit;
+					break;
+				}
+			}
+			
+			sb.append(lowestUnit.friendlyName(0L));
 		}
 		
 		return sb.toString();

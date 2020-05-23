@@ -15,6 +15,7 @@ import nl.thewgbbroz.butils_v2.config.MessagesConfig;
 import nl.thewgbbroz.butils_v2.metrics.Metrics;
 import nl.thewgbbroz.butils_v2.services.ServiceManager;
 import nl.thewgbbroz.butils_v2.services.WGBService;
+import nl.thewgbbroz.butils_v2.utils.ArrayUtils;
 
 public abstract class WGBPlugin extends JavaPlugin {
 	private static final String[] LANG_FILE_NAMES = {
@@ -24,6 +25,8 @@ public abstract class WGBPlugin extends JavaPlugin {
 	
 	protected Config config;
 	protected MessagesConfig msgConfig;
+	
+	protected boolean debugEnabled = false;
 	
 	protected ServiceManager serviceManager;
 	protected CommandManager commandManager;
@@ -52,6 +55,8 @@ public abstract class WGBPlugin extends JavaPlugin {
 		if(getResource("config.yml") != null) {
 			config = new Config(this, "config.yml");
 		}
+		
+		debugEnabled = config != null ? config.get().getBoolean("debug", false) : false;
 		
 		// Load lang config if present
 		for(String fileName : LANG_FILE_NAMES) {
@@ -111,14 +116,14 @@ public abstract class WGBPlugin extends JavaPlugin {
 		}
 	}
 	
-	
-	
 	/**
 	 * Reloads all configuration files and calls {@link ServiceManager#reloadAllServices()}
 	 */
 	public void reload() {
 		// Reload configuration files
 		allConfigs.forEach(Config::reload);
+		
+		debugEnabled = config != null ? config.get().getBoolean("debug", false) : false;
 		
 		// Reload services
 		serviceManager.reloadAllServices();
@@ -142,6 +147,44 @@ public abstract class WGBPlugin extends JavaPlugin {
 	@Override
 	public void saveDefaultConfig() {
 		config.saveDefault();
+	}
+	
+	/**
+	 * @param obj The object(s) to print
+	 * 
+	 * Prints an information message.
+	 */
+	public void info(Object... obj) {
+		getLogger().info(() -> ArrayUtils.concat(obj, ", "));
+	}
+	
+	/**
+	 * @param obj The object(s) to print
+	 * 
+	 * Prints a warning message.
+	 */
+	public void warning(Object... obj) {
+		getLogger().warning(() -> ArrayUtils.concat(obj, ", "));
+	}
+	
+	/**
+	 * @param obj The object(s) to print
+	 * 
+	 * Prints a severe message.
+	 */
+	public void severe(Object... obj) {
+		getLogger().severe(() -> ArrayUtils.concat(obj, ", "));
+	}
+	
+	/**
+	 * @param obj The object(s) to print
+	 * 
+	 * Prints a debug message if debugging is enabled.
+	 */
+	public void debug(Object... obj) {
+		if(debugEnabled) {
+			getLogger().info(() -> "[DEBUG] " + ArrayUtils.concat(obj, ", "));
+		}
 	}
 	
 	/**
@@ -174,13 +217,28 @@ public abstract class WGBPlugin extends JavaPlugin {
 	
 	/**
 	 * @return Passes the path and replacements to the message config, if it exists.
+	 * 
 	 * If a message could not be found, or if a message config is not present the path will be returned.
 	 */
 	public String getMessage(String path, Object... replace) {
-		if(msgConfig == null)
+		if(msgConfig == null) {
 			return path;
+		}
 		
 		return msgConfig.getMessage(path, replace);
+	}
+	
+	/**
+	 * @return Passes the path and replacements to the message config, if it exists. If it doesn't exist or the path doesn't exist, the defaultMessage will be used.
+	 * 
+	 * If a message could not be found, or if a message config is not present the default message will be returned.
+	 */
+	public String getMessageOrDefault(String path, String defaultMessage, Object... replace) {
+		if(msgConfig == null) {
+			return MessagesConfig.treatMessage(defaultMessage, replace);
+		}
+		
+		return msgConfig.getMessageOrDefault(path, defaultMessage, replace);
 	}
 	
 	/**

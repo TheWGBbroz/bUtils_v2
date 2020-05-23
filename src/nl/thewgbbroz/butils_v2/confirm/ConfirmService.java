@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.bukkit.Bukkit;
-import org.bukkit.entity.Player;
+import org.bukkit.command.CommandSender;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerQuitEvent;
@@ -20,7 +20,7 @@ public class ConfirmService extends WGBService implements Listener {
 	
 	private final WGBPlugin plugin;
 	
-	private Map<Player, List<PendingConfirm>> confirms = new HashMap<>();
+	private Map<CommandSender, List<PendingConfirm>> confirms = new HashMap<>();
 	
 	public ConfirmService(WGBPlugin plugin) {
 		this.plugin = plugin;
@@ -33,8 +33,8 @@ public class ConfirmService extends WGBService implements Listener {
 			public void run() {
 				long now = System.currentTimeMillis();
 				
-				List<Player> remove = new ArrayList<>();
-				for(Player p : confirms.keySet()) {
+				List<CommandSender> remove = new ArrayList<>();
+				for(CommandSender p : confirms.keySet()) {
 					List<PendingConfirm> playerConfirms = confirms.get(p);
 					for(int i = 0; i < playerConfirms.size(); i++) {
 						PendingConfirm pc = playerConfirms.get(i);
@@ -71,7 +71,7 @@ public class ConfirmService extends WGBService implements Listener {
 	 * @return If this returns true, this is the second time the method is called with the player and tag combination within the expireDelay.
 	 * If this returns false, this is the first time the method is called with the player and tag combination and will return true when this method is called a second time within the expireDelay given.
 	 */
-	public boolean confirm(Player p, String tag, long expireDelay) {
+	public boolean confirm(CommandSender p, String tag, long expireDelay) {
 		List<PendingConfirm> playerConfirms = confirms.get(p);
 		if(playerConfirms == null) {
 			playerConfirms = new ArrayList<>();

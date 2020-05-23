@@ -4,9 +4,12 @@ import java.lang.reflect.Constructor;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import nl.thewgbbroz.butils_v2.WGBPlugin;
+import nl.thewgbbroz.butils_v2.utils.ArrayUtils;
 
 public class ServiceManager {
 	private final WGBPlugin plugin;
@@ -90,8 +93,9 @@ public class ServiceManager {
 			}catch(Exception e) {}
 		}
 		
-		if(serviceConstructor == null)
-			throw new IllegalArgumentException("Service " + serviceClass.getName() + " needs special constructor arguments!");
+		if(serviceConstructor == null) {
+			throw new IllegalArgumentException("Service " + serviceClass.getName() + " does not have the required parameters! (" + plugin.getClass().getName() + ")");
+		}
 		
 		try {
 			WGBService service = serviceConstructor.newInstance(plugin);
@@ -103,6 +107,91 @@ public class ServiceManager {
 		}
 		
 		return null;
+	}
+	
+	/**
+	 * Loads a service. The constructor class with the plugin as argument will be called.
+	 * If this fails, the service cannot be loaded with this method and {@link ServiceManager#loadService(WGBService)} should be called instead.
+	 */
+	@SuppressWarnings("unchecked")
+	public <E extends WGBService> E loadService(Class<? extends E> serviceClass, Object... serviceParameters) {
+		// Try to initialize service with the plugin and serviceParameters as parameters.
+		
+		Class<?>[] constructorParameterClasses = new Class<?>[1 + serviceParameters.length];
+		for(int i = 0; i < serviceParameters.length; i++) {
+			constructorParameterClasses[i + 1] = serviceParameters[i].getClass();
+		}
+		
+		constructorParameterClasses[0] = plugin.getClass();
+		
+		Constructor<? extends WGBService> serviceConstructor = findConstructor(serviceClass, constructorParameterClasses);
+		
+		if(serviceConstructor == null) {
+			String required = ArrayUtils.concat(constructorParameterClasses, ", ", clazz -> clazz.getName());
+			throw new IllegalArgumentException("Service " + serviceClass.getName() + " does not have the required parameters! (" + required + ")");
+		}
+		
+		try {
+			Object[] parameters = new Object[1 + serviceParameters.length];
+			for(int i = 0; i < serviceParameters.length; i++) {
+				parameters[i + 1] = serviceParameters[i];
+			}
+			
+			parameters[0] = plugin;
+			
+			WGBService service = serviceConstructor.newInstance(parameters);
+			
+			return (E) loadService(service);
+		} catch(Exception e) {
+			plugin.getLogger().warning("Could not call constructor of service " + serviceClass.getSimpleName() + ": " + e.toString());
+			e.printStackTrace();
+		}
+		
+		return null;
+	}
+	
+	@SuppressWarnings("unchecked")
+	private static <T> Constructor<T> findConstructor(Class<?> clazz, Class<?>[] lookingFor) {
+		for(Constructor<?> constructor : clazz.getConstructors()) {
+			if(constructor.getParameters().length != lookingFor.length) {
+				continue;
+			}
+			
+			boolean isCorrectConstructor = true;
+			
+			for(int i = 0; i < constructor.getParameters().length; i++) {
+				Class<?> parameter = constructor.getParameters()[i].getType();
+				Set<Class<?>> lookingForParents = getSuperclassesAndInterfaces(lookingFor[i]);
+				
+				if(!lookingForParents.contains(parameter)) {
+					isCorrectConstructor = false;
+					break;
+				}
+			}
+			
+			if(isCorrectConstructor) {
+				return (Constructor<T>) constructor;
+			}
+		}
+		
+		return null;
+	}
+	
+	private static Set<Class<?>> getSuperclassesAndInterfaces(Class<?> clazz) {
+		Set<Class<?>> res = new HashSet<>();
+		
+		for(Class<?> interfaze : clazz.getInterfaces()) {
+			res.add(interfaze);
+			res.addAll(getSuperclassesAndInterfaces(interfaze));
+		}
+		
+		Class<?> superClazz = clazz.getSuperclass();
+		if(superClazz != null) {
+			res.add(clazz.getSuperclass());
+			res.addAll(getSuperclassesAndInterfaces(clazz.getSuperclass()));
+		}
+		
+		return res;
 	}
 	
 	/**

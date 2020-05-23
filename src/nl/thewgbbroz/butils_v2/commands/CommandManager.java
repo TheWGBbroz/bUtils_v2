@@ -3,6 +3,8 @@ package nl.thewgbbroz.butils_v2.commands;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.bukkit.command.PluginCommand;
+
 import nl.thewgbbroz.butils_v2.WGBPlugin;
 
 public class CommandManager {
@@ -21,7 +23,13 @@ public class CommandManager {
 	 * Registers a command
 	 */
 	public <E extends WGBCommand> E registerCommand(E executor) {
-		plugin.getCommand(executor.getCommand()).setExecutor(executor);
+		PluginCommand cmd = plugin.getCommand(executor.getCommand());
+		if(cmd == null) {
+			plugin.getLogger().warning("Tried to register command " + executor.getCommand() + ", but the PluginCommand is null. Is it listed in plugin.yml?");
+			return null;
+		}
+		
+		cmd.setExecutor(executor);
 		registeredCommands.add(executor);
 		
 		return executor;

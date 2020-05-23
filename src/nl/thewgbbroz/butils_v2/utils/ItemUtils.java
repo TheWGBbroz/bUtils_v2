@@ -1,6 +1,7 @@
 package nl.thewgbbroz.butils_v2.utils;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -124,7 +125,7 @@ public class ItemUtils {
 	
 	@SuppressWarnings("deprecation")
 	public static ItemStack parseItemStack(String s) {
-		// name amount damage name:___ ench:___ ench:___ lore:_,_,_
+		// type amount damage name:___ ench:___ ench:___ lore:_,_,_
 		
 		if(s == null || s.equalsIgnoreCase("null") || s.equalsIgnoreCase("none"))
 			return null;
@@ -531,5 +532,21 @@ public class ItemUtils {
 		ItemMeta im = is.getItemMeta();
 		im.setDisplayName(name);
 		is.setItemMeta(im);
+	}
+	
+	private static HashSet<Material> isTool_toolMaterials = null;
+	public static boolean isTool(Material mat) {
+		if(isTool_toolMaterials == null) {
+			isTool_toolMaterials = new HashSet<>();
+			for(Material m : Material.values()) {
+				String name = m.name();
+				if(name.contains("AXE") || name.contains("HOE") || name.contains("SHOVEL") || name.contains("SWORD")) {
+					isTool_toolMaterials.add(m);
+				}
+			}
+		}
+		
+		// HashSet#contains is O(1)!
+		return isTool_toolMaterials.contains(mat);
 	}
 }

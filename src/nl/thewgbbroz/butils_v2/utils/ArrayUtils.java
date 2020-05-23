@@ -1,6 +1,7 @@
 package nl.thewgbbroz.butils_v2.utils;
 
 import java.util.ArrayList;
+import java.util.function.Function;
 
 public class ArrayUtils {
 	private ArrayUtils() {
@@ -34,18 +35,23 @@ public class ArrayUtils {
 		return res;
 	}
 	
-	public static <T> String concat(T[] array, String seperator) {
+	public static <T> String concat(T[] array, String seperator, Function<T, String> toString) {
 		StringBuilder res = new StringBuilder();
 		
 		for(int i = 0; i < array.length; i++) {
-			res.append(String.valueOf(array[i]));
-			if(i != array.length - 1)
+			res.append(toString.apply(array[i]));
+			
+			if(i != array.length - 1) {
 				res.append(seperator);
+			}
 		}
 		
 		return res.toString();
 	}
 	
+	public static <T> String concat(T[] array, String seperator) {
+		return concat(array, seperator, String::valueOf);
+	}
 	
 	
 	

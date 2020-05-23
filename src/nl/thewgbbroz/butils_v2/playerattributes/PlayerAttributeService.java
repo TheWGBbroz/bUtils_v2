@@ -1,84 +1,77 @@
 package nl.thewgbbroz.butils_v2.playerattributes;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.File;
-import java.io.IOException;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
+import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 
 import nl.thewgbbroz.butils_v2.WGBPlugin;
-import nl.thewgbbroz.butils_v2.datafiles.DataFile;
-import nl.thewgbbroz.butils_v2.datafiles.DataFileMaster;
 import nl.thewgbbroz.butils_v2.services.WGBService;
 
-public class PlayerAttributeService extends WGBService {
+public class PlayerAttributeService extends WGBService implements Listener {
 	private final WGBPlugin plugin;
+	private final IAttributeStorage storage;
 	
-	private Map<UUID, PlayerAttributes> attribs = new HashMap<>();
-	private DataFile dataFile;
+	public PlayerAttributeService(WGBPlugin plugin, IAttributeStorage storage) {
+		this.plugin = plugin;
+		this.storage = storage;
+	}
+	
+	public PlayerAttributeService(WGBPlugin plugin, ConfigurationSection storageConf) {
+		this(plugin, IAttributeStorage.fromConfig(storageConf, plugin));
+	}
 	
 	public PlayerAttributeService(WGBPlugin plugin) {
-		this.plugin = plugin;
+		this(plugin, new DataFileAttributeStorage(plugin));
 	}
 	
 	@Override
 	public void load() {
-		dataFile = new DataFile(new File(plugin.getDataFolder(), "player-attributes.dat"), new DataFileMaster() {
-			@Override
-			public void save(DataOutputStream dos) throws Exception {
-				dos.writeInt(attribs.size());
-				for(UUID uuid : attribs.keySet()) {
-					PlayerAttributes pattribs = attribs.get(uuid);
-					pattribs.serialize(dos);
-				}
-			}
-			
-			@Override
-			public void load(DataInputStream dis) throws Exception {
-				int attribsAmount = dis.readInt();
-				for(int i = 0; i < attribsAmount; i++) {
-					PlayerAttributes pattribs;
-					try {
-						pattribs = PlayerAttributes.deserialize(plugin, dis);
-					}catch(IOException e) {
-						e.printStackTrace();
-						continue;
-					}
-					
-					attribs.put(pattribs.getUUID(), pattribs);
-				}
-			}
+		Bukkit.getOnlinePlayers().forEach(player -> {
+			getAttributes(player).onJoin(player);
 		});
-		dataFile.savePeriodicallyMinute(plugin);
+		
+		Bukkit.getPluginManager().registerEvents(this, plugin);
 	}
 	
 	@Override
 	public void unload() {
-		dataFile.save(true);
+		Bukkit.getOnlinePlayers().forEach(player -> {
+			getAttributes(player).onLeave();
+		});
+		
+		storage.destroy();
+	}
+	
+	@EventHandler
+	public void onPlayerJoinEvent(PlayerJoinEvent e) {
+		getAttributes(e.getPlayer()).onJoin(e.getPlayer());
+	}
+	
+	@EventHandler
+	public void onPlayerQuitEvent(PlayerQuitEvent e) {
+		getAttributes(e.getPlayer()).onLeave();
 	}
 	
 	protected void save(PlayerAttributes pattribs) {
-		if(!attribs.containsKey(pattribs.getUUID())) {
-			attribs.put(pattribs.getUUID(), pattribs);
-		}
-		
-		dataFile.save();
+		storage.updateOrPutPlayerAttributes(pattribs);
 	}
 	
 	public PlayerAttributes getAttributes(UUID uuid) {
-		PlayerAttributes pattribs = attribs.get(uuid);
-		if(pattribs != null) {
-			return pattribs;
-		}
-		
-		return new PlayerAttributes(plugin, uuid);
+		return storage.fetchOrNewPlayerAttributes(uuid);
 	}
 	
 	public PlayerAttributes getAttributes(OfflinePlayer player) {
-		return getAttributes(player.getUniqueId());
+		return storage.fetchOrNewPlayerAttributes(player.getUniqueId());
+	}
+	
+	public Map<UUID, PlayerAttributes> getAllAttributes() {
+		return storage.fetchAllPlayerAttributes();
 	}
 }

@@ -89,4 +89,18 @@ public class Config {
 	public boolean hasDefaults() {
 		return plugin.getResource(name) != null;
 	}
+	
+	/**
+	 * @return The config name.
+	 */
+	public String getName() {
+		return name;
+	}
+	
+	/**
+	 * @return The file of the config file on the disk.
+	 */
+	public File getFile() {
+		return file;
+	}
 }
